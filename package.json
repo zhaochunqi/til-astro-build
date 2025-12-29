@@ -7,7 +7,7 @@
     "build": "pnpm run sync && astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "sync": "rm -rf src/content/notes src/content/assets && git clone --depth 1 https://github.com/zhaochunqi/til.git .tmp_til && mv .tmp_til/notes src/content/notes && mv .tmp_til/assets src/content/assets && rm -rf .tmp_til"
+    "sync": "./scripts/sync-content.sh"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.13",
