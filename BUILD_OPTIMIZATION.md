@@ -34,21 +34,32 @@ pnpm run build
 pnpm run dev
 ```
 
-### Cloudflare Pages 缓存配置
+### Cloudflare Workers 部署配置
 
-Cloudflare Pages 默认会缓存 `node_modules`，但不会缓存自定义目录。为了利用 `.til-cache`，需要：
+#### 方案 A：直接使用 Wrangler 部署（推荐）
 
-1. **方案 A：使用 Cloudflare Pages 的构建缓存**
-   - Cloudflare Pages 会在构建之间保留工作目录
-   - `.til-cache` 会自动在构建之间保留
-   - 无需额外配置
+项目已配置 `wrangler.jsonc`，可以直接部署：
 
-2. **方案 B：GitHub Actions + Cloudflare Pages**
-   如果需要更精细的缓存控制，可以使用 GitHub Actions：
+```bash
+# 本地部署
+pnpm run deploy
+
+# 或者直接使用 wrangler
+npx wrangler deploy
+```
+
+**配置说明：**
+- `wrangler.jsonc` 配置了静态资源目录为 `./dist`
+- Cloudflare Workers 会自动使用全球边缘网络
+- 支持自动 HTTPS 和 CDN 加速
+
+#### 方案 B：GitHub Actions + Cloudflare Workers
+
+如果需要自动化部署和更精细的缓存控制，可以使用 GitHub Actions：
 
 ```yaml
 # .github/workflows/deploy.yml
-name: Deploy to Cloudflare Pages
+name: Deploy to Cloudflare Workers
 
 on:
   push:
@@ -82,14 +93,17 @@ jobs:
       - run: pnpm install
       - run: pnpm run build
       
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: your-project-name
-          directory: dist
 ```
+
+**优势：**
+- ✅ 自动部署到全球边缘网络
+- ✅ 使用 GitHub Actions 缓存加速构建
+- ✅ `.til-cache` 在构建之间保留，只需 `git pull` 更新
 
 ### 性能对比
 
