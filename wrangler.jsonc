@@ -1,0 +1,15 @@
+{
+    // Cloudflare Workers 配置
+    "name": "til-astro-build",
+    "compatibility_date": "2025-12-29",
+    "assets": {
+        "directory": "./dist"
+    },
+    // 可选：自定义路由
+    "routes": [
+        {
+            "pattern": "/*",
+            "zone_name": "til-demo.zhaochunqi.com"
+        }
+    ]
+}

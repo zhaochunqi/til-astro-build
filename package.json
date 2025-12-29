@@ -7,7 +7,8 @@
     "build": "pnpm run sync && astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "sync": "./scripts/sync-content.sh"
+    "sync": "./scripts/sync-content.sh",
+    "deploy": "pnpm run build && wrangler deploy"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.13",
