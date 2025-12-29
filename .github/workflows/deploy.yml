@@ -1,0 +1,81 @@
+name: Deploy to Cloudflare Workers
+
+on:
+  # Webhook 触发 - 从 TIL 仓库接收更新通知
+  repository_dispatch:
+    types: [til-updated]
+  # 支持手动触发
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Build and Deploy
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      
+      # 使用 actions/checkout 获取 TIL 内容，配合 cache 优化
+      - name: Checkout TIL Repository
+        uses: actions/checkout@v4
+        with:
+          repository: zhaochunqi/til
+          path: .til-cache
+          sparse-checkout: |
+            notes
+            assets
+          sparse-checkout-cone-mode: false
+      
+      - name: Sync TIL content to project
+        run: |
+          echo "📋 复制 TIL 内容到项目..."
+          rm -rf src/content/notes src/content/assets
+          cp -r .til-cache/notes src/content/notes
+          cp -r .til-cache/assets src/content/assets
+          echo "✅ 内容同步完成!"
+      
+      - name: Cache Info
+        run: |
+          echo "📦 TIL 内容已同步"
+          if [ -n "${{ github.event.client_payload.sha }}" ]; then
+            echo "🔔 Triggered by webhook from TIL repo"
+            echo "📝 Latest commit: ${{ github.event.client_payload.sha }}"
+          fi
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build site
+        run: pnpm run build
+      
+      - name: Deploy to Cloudflare Workers
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --name til-astro-build --compatibility-date 2025-12-30 --assets ./dist
+      
+      - name: Deployment Summary
+        run: |
+          echo "### 🚀 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Worker**: til-astro-build" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL**: https://til-astro-build.workers.dev" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ github.event.client_payload.sha }}" ]; then
+            echo "- **TIL Commit**: ${{ github.event.client_payload.sha }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "- **Triggered by**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY

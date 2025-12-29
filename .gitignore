@@ -23,7 +23,8 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 
-# TIL content cache and synced directories
+# TIL content (synced from source repo)
+.til-local/
 .til-cache/
 src/content/notes/
 src/content/assets/
