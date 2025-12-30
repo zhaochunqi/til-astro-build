@@ -1,0 +1,304 @@
+---
+import Layout from '../layouts/Layout.astro';
+import NoteCard from '../components/NoteCard.astro';
+import { Search, Loader2 } from 'lucide-astro';
+import { getCollection } from 'astro:content';
+
+const notes = await getCollection('notes');
+const sortedNotes = notes.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<Layout title="Search - TIL">
+  <div class="max-w-3xl mx-auto space-y-6">
+    <div class="space-y-4">
+      <div class="flex items-center gap-2 text-muted-foreground">
+        <h1 class="text-3xl font-bold tracking-tighter text-foreground">Search</h1>
+        <div id="loading-indicator" class="hidden">
+           <Loader2 class="size-6 animate-spin" />
+        </div>
+      </div>
+      
+      <div class="relative">
+        <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+        <input
+          type="text"
+          id="search-input"
+          class="w-full h-10 pl-9 pr-4 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          placeholder="Search notes..."
+        />
+      </div>
+
+      <div class="flex items-center justify-between">
+         <div class="flex items-center space-x-2">
+            <input type="checkbox" id="compact-mode" class="h-4 w-4 rounded border-primary text-primary shadow focus:ring-primary-500" />
+            <label for="compact-mode" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Compact View (Titles Only)</label>
+         </div>
+         <span id="results-count" class="text-sm text-muted-foreground"></span>
+      </div>
+    </div>
+
+    <div id="search-results" class="space-y-6">
+      {sortedNotes.map((note) => (
+        <div class="search-item" data-title={note.data.title.toLowerCase()} data-tags={(note.data.tags || []).join(' ').toLowerCase()} data-slug={note.slug}>
+           <NoteCard note={note} />
+        </div>
+      ))}
+    </div>
+    
+    <div id="no-results" class="hidden text-center py-12 text-muted-foreground">
+        No results found.
+    </div>
+  </div>
+</Layout>
+
+<style is:global>
+  /* Compact Mode Styles */
+  .mode-compact .note-content, 
+  .mode-compact .note-tags {
+    display: none !important;
+  }
+  
+  .mode-compact .note-header {
+      padding-bottom: 1.5rem !important; /* Restore padding when other sections gone */
+      flex-direction: row-reverse !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+  }
+  
+  .mode-compact .note-header > div:first-child { 
+      /* Date section */
+      margin-bottom: 0 !important;
+  }
+
+  .mode-compact .note-header h3 {
+      flex: 1;
+      margin-right: 1rem;
+      font-size: 1rem; /* Smaller font in compact list */
+  }
+
+  /* Highlight Styles */
+  .search-highlight {
+      background-color: #fde047 !important; /* Yellow-300 */
+      color: #000 !important; /* Force black text for contrast */
+      border-radius: 2px;
+      padding: 0 1px;
+      box-shadow: 0 0 2px #fde047;
+  }
+</style>
+
+<script>
+  // DOM Elements
+  const searchInput = document.getElementById('search-input') as HTMLInputElement;
+  const compactCheckbox = document.getElementById('compact-mode') as HTMLInputElement;
+  const resultsContainer = document.getElementById('search-results');
+  const resultsCount = document.getElementById('results-count');
+  const noResults = document.getElementById('no-results');
+  const searchItems = document.querySelectorAll('.search-item');
+
+  let originalContentMap = new Map();
+  // Debounce with immediate execution option for smoother feel
+  let isFiltering = false;
+
+  // Initialization
+  function init() {
+    // Read URL params
+    const params = new URLSearchParams(window.location.search);
+    const query = params.get('q') || '';
+    const compact = params.get('compact') === 'true';
+
+    // Set initial UI state
+    if (searchInput) searchInput.value = query;
+    if (compactCheckbox) compactCheckbox.checked = compact;
+    if (compact && resultsContainer) resultsContainer.classList.add('mode-compact');
+
+    // Filtering
+    console.log('Search init: found items', searchItems.length);
+    filterResults(query);
+    
+    // Event listeners
+    searchInput?.addEventListener('input', debounce(handleInput, 300));
+    compactCheckbox?.addEventListener('change', handleCompactToggle);
+    
+    // Handle browser back/forward buttons
+    window.addEventListener('popstate', () => {
+        const params = new URLSearchParams(window.location.search);
+        const q = params.get('q') || '';
+        const c = params.get('compact') === 'true';
+        
+        if (searchInput) searchInput.value = q;
+        if (compactCheckbox) compactCheckbox.checked = c;
+        if (resultsContainer) {
+             if (c) resultsContainer.classList.add('mode-compact');
+             else resultsContainer.classList.remove('mode-compact');
+        }
+        filterResults(q);
+    });
+  }
+
+  function handleInput() {
+    const query = searchInput?.value.trim();
+    const compact = compactCheckbox?.checked;
+    updateURL(query, compact);
+    filterResults(query);
+  }
+
+  function handleCompactToggle() {
+    const query = searchInput?.value.trim();
+    const compact = compactCheckbox?.checked;
+    
+    if (resultsContainer) {
+        if (compact) resultsContainer.classList.add('mode-compact');
+        else resultsContainer.classList.remove('mode-compact');
+    }
+    
+    updateURL(query, compact);
+  }
+
+  function updateURL(query: string | undefined, compact: boolean | undefined) {
+    const url = new URL(window.location.href);
+    if (query) {
+      url.searchParams.set('q', query);
+    } else {
+      url.searchParams.delete('q');
+    }
+    
+    if (compact) {
+        url.searchParams.set('compact', 'true');
+    } else {
+        url.searchParams.delete('compact');
+    }
+    
+    window.history.pushState({}, '', url);
+  }
+
+  function filterResults(query: string) {
+    if (!searchItems || isFiltering) return;
+    isFiltering = true;
+    
+    // Use requestAnimationFrame to avoid blocking UI on heavy DOM ops
+    requestAnimationFrame(() => {
+        const lowerQuery = query.toLowerCase();
+        let count = 0;
+        
+        // Remove previous highlights
+        // Efficient removal: Select all .search-highlight and UNWRAP them
+        // This is faster and safer than full re-render or complex replacement
+        removeHighlights(resultsContainer);
+
+        searchItems.forEach(item => {
+            const title = (item as HTMLElement).dataset.title || '';
+            const tags = (item as HTMLElement).dataset.tags || '';
+            const content = item.textContent?.toLowerCase() || ''; 
+
+            if (!query) {
+                 (item as HTMLElement).style.display = '';
+                 count++;
+                 return;
+            }
+
+            if (title.includes(lowerQuery) || tags.includes(lowerQuery) || content.includes(lowerQuery)) {
+                (item as HTMLElement).style.display = '';
+                count++;
+                // Highlight
+                if (query.length > 0) highlightTextInNode(item, query);
+            } else {
+                (item as HTMLElement).style.display = 'none';
+            }
+        });
+
+        if (resultsCount) resultsCount.textContent = query ? `${count} found` : `${count} total`;
+        
+        if (count === 0 && query) {
+            if (noResults) noResults.classList.remove('hidden');
+        } else {
+            if (noResults) noResults.classList.add('hidden');
+        }
+        
+        isFiltering = false;
+    });
+  }
+
+  // Highlighting Logic
+  function highlightTextInNode(node: Element, query: string) {
+      if (!query) return;
+      
+      // Use TreeWalker to find text nodes
+      const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null);
+      const textNodes: Text[] = [];
+      let currentNode;
+      
+      while(currentNode = walker.nextNode()) {
+          // Check if node is visible/valid content
+          if (currentNode.textContent?.trim()) {
+               textNodes.push(currentNode as Text);
+          }
+      }
+      
+      // regex escape
+      const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(${safeQuery})`, 'gi');
+      
+      textNodes.forEach(textNode => {
+          // Avoid double highlighting or highlighting inside existing highlights triggers (if script re-runs)
+          // Also avoid highlighting script/style content if any leaked
+          const parent = textNode.parentElement;
+          if (parent?.tagName === 'SCRIPT' || 
+              parent?.tagName === 'STYLE' || 
+              parent?.classList.contains('search-highlight')) return;
+              
+          const text = textNode.nodeValue;
+          if (text && regex.test(text)) {
+              const fragment = document.createDocumentFragment();
+              let lastIndex = 0;
+              
+              // We must use exec to iterate matches and create text/span nodes
+              let match;
+              regex.lastIndex = 0; // Reset
+              
+              const parts = text.split(regex);
+              // split with capturing group returns [prev, match, next, match, ...]
+              
+              parts.forEach((part, i) => {
+                  if (part.toLowerCase() === query.toLowerCase()) {
+                      const span = document.createElement('span');
+                      span.className = 'search-highlight';
+                      span.textContent = part;
+                      fragment.appendChild(span);
+                  } else {
+                      fragment.appendChild(document.createTextNode(part));
+                  }
+              });
+
+              textNode.parentNode?.replaceChild(fragment, textNode);
+          }
+      });
+  }
+
+  function removeHighlights(node: Element | null) {
+      if (!node) return;
+      
+      const highlights = node.querySelectorAll('.search-highlight');
+      highlights.forEach(span => {
+          const parent = span.parentNode;
+          if (parent) {
+              parent.replaceChild(document.createTextNode(span.textContent || ''), span);
+              parent.normalize(); 
+          }
+      });
+  }
+
+  function debounce(func: Function, wait: number) {
+    let timeout: number;
+    return function executedFunction(...args: any[]) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // Run init
+  init();
+</script>
