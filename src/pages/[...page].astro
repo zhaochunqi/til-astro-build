@@ -6,7 +6,7 @@ import { getCollection } from 'astro:content';
 
 export async function getStaticPaths({ paginate }) {
 	const notes = (await getCollection('notes')).sort(
-		(a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+		(a, b) => b.id.localeCompare(a.id)
 	);
 	
 	return paginate(notes, { pageSize: 20 });

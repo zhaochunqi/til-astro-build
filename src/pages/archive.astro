@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
 
 const notes = (await getCollection('notes')).sort(
-	(a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+	(a, b) => b.id.localeCompare(a.id)
 );
 
 // Group notes by year and month
@@ -70,7 +70,7 @@ const monthOrder = ['January', 'February', 'March', 'April', 'May', 'June', 'Jul
 													class="flex items-baseline justify-between gap-4 hover:text-foreground transition-colors"
 												>
 													<span class="group-hover:underline">{note.data.title}</span>
-													<span class="text-sm text-muted-foreground whitespace-nowrap">{day}</span>
+													<span class="text-sm text-muted-foreground whitespace-nowrap text-right font-mono">{day}</span>
 												</a>
 											</li>
 										);
