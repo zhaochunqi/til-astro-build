@@ -16,19 +16,27 @@ const { note } = Astro.props;
 ---
 
 <Layout title={`${note.data.title} - TIL`}>
-  <article class="max-w-3xl mx-auto py-8 px-4">
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold font-heading tracking-tight mb-3">{note.data.title}</h1>
-      <div class="flex flex-wrap gap-2 items-center text-sm text-muted-foreground">
-        <time datetime={note.data.date.toISOString()}>
-          {note.data.date.toISOString().split('T')[0]}
-        </time>
-        <span>•</span>
-        <div class="flex gap-2">
-          {note.data.tags?.map((tag) => <Tag tag={tag} />)}
+  <div class="max-w-3xl mx-auto">
+    <article class="rounded-lg border bg-card text-card-foreground shadow-sm">
+      <div class="flex flex-col space-y-1.5 p-6 md:p-10 pb-4">
+        <div class="flex items-center space-x-2 text-sm text-muted-foreground mb-4">
+          <time datetime={note.data.date.toISOString()}>
+            {note.data.date.toISOString().split('T')[0]}
+          </time>
+        </div>
+        <div class="space-y-2">
+          <span class="text-sm font-medium text-muted-foreground">引用此文章:</span>
+          <pre class="rounded-lg border border-border bg-muted/30 p-4 shadow-sm overflow-x-auto text-sm"><code style="background: transparent; padding: 0; border: none; font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Droid Sans Mono', 'Source Code Pro', monospace;">[{note.data.title}](https://til.zhaochunqi.com/{note.slug})</code></pre>
         </div>
       </div>
-    </div>
-    <TilContent note={note} />
-  </article>
+
+      <div class="p-6 md:p-10 pt-4">
+        <TilContent note={note} />
+      </div>
+
+      <div class="p-6 md:p-10 pt-2 flex flex-wrap gap-2 border-t border-border/50">
+        {note.data.tags?.map((tag) => <Tag tag={tag} />)}
+      </div>
+    </article>
+  </div>
 </Layout>
