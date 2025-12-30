@@ -72,12 +72,32 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --name til-astro-build --compatibility-date 2025-12-30 --assets ./dist
       
+      - name: Get Worker URL
+        id: get-url
+        run: |
+          DETECTED_URL=$(npx wrangler whoami 2>/dev/null | grep -o 'https://[^[:space:]]*\.workers\.dev' | head -1)
+          if [ -n "$DETECTED_URL" ]; then
+            WORKER_URL="$DETECTED_URL"
+            URL_SOURCE="detected"
+            echo "✅ Detected Worker URL: $WORKER_URL"
+          else
+            WORKER_URL="https://til-astro-build.harchiko.workers.dev"
+            URL_SOURCE="default"
+            echo "⚠️ Using default Worker URL: $WORKER_URL"
+          fi
+          echo "worker_url=$WORKER_URL" >> $GITHUB_OUTPUT
+          echo "url_source=$URL_SOURCE" >> $GITHUB_OUTPUT
+      
       - name: Deployment Summary
         run: |
           echo "### 🚀 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Worker**: til-astro-build" >> $GITHUB_STEP_SUMMARY
-          echo "- **URL**: https://til-astro-build.workers.dev" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.get-url.outputs.url_source }}" = "detected" ]; then
+            echo "- **URL**: ${{ steps.get-url.outputs.worker_url }} ✅" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **URL**: ${{ steps.get-url.outputs.worker_url }} ⚠️ (default)" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "- **Build Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           if [ -n "${{ github.event.client_payload.sha }}" ]; then
             echo "- **TIL Commit**: ${{ github.event.client_payload.sha }}" >> $GITHUB_STEP_SUMMARY
