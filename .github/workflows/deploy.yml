@@ -5,6 +5,10 @@ on:
   push:
     branches:
       - main
+  # Pull Request 触发 - 生成部署预览并评论
+  pull_request:
+    branches:
+      - main
   # Webhook 触发 - 从 TIL 仓库接收更新通知
   repository_dispatch:
     types: [til-updated]
