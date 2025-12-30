@@ -8,6 +8,7 @@
 - 📝 自动同步 TIL 仓库内容
 - ⚡️ 智能缓存机制，加速构建
 - 🌐 部署到 Cloudflare Workers
+- 🔄 代码推送自动构建部署
 - 🎨 简洁的黑白极简设计
 
 ## 🧞 命令
@@ -46,6 +47,32 @@ pnpm run dev
 ### 生产部署
 
 通过 GitHub Actions 自动部署，详见 [WEBHOOK.md](./WEBHOOK.md)。
+
+#### 配置 Cloudflare Secrets
+
+部署到 Cloudflare Workers 需要在 GitHub 仓库中配置以下 secrets：
+
+1. **获取 Cloudflare API Token**
+   - 访问 [Cloudflare Dashboard](https://dash.cloudflare.com/profile/api-tokens)
+   - 点击 "Create Token"
+   - 选择 "Edit Cloudflare Workers" 模板
+   - 或者使用 "Custom Token" 并添加以下权限：
+     - Account - Cloudflare Workers Scripts - Edit
+     - Account - Account Settings - Read
+   - 复制生成的 API Token
+
+2. **获取 Account ID**
+   - 访问 [Cloudflare Dashboard](https://dash.cloudflare.com/)
+   - 选择任意域名或进入 Workers & Pages
+   - 在右侧栏找到 "Account ID" 并复制
+
+3. **配置 GitHub Secrets**
+   - 进入 GitHub 仓库的 Settings → Secrets and variables → Actions
+   - 点击 "New repository secret" 添加以下两个 secrets：
+     - `CLOUDFLARE_API_TOKEN`: 粘贴步骤 1 中的 API Token
+     - `CLOUDFLARE_ACCOUNT_ID`: 粘贴步骤 2 中的 Account ID
+
+配置完成后，推送代码到 `main` 分支即可自动部署。
 
 ## 🔧 构建优化
 
