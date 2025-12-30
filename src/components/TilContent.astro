@@ -1,7 +1,7 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import { render } from 'astro:content';
-import CopyButton from './CopyButton.astro';
+
 
 interface Props {
   note: CollectionEntry<'notes'>;
@@ -29,7 +29,7 @@ const { Content } = await render(note);
 
 <script>
   // 添加复制按钮到所有代码块
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('astro:page-load', () => {
     const codeBlocks = document.querySelectorAll('.til-content pre');
     
     codeBlocks.forEach((block) => {
