@@ -25,27 +25,29 @@ const sizeClasses = {
 </button>
 
 <script>
-  document.querySelectorAll('.copy-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const content = btn.getAttribute('data-copy-content');
-      const icon = btn.querySelector('.copy-icon');
-      const text = btn.querySelector('.copy-text');
-      const originalHTML = btn.innerHTML;
-      
-      try {
-        await navigator.clipboard.writeText(content || '');
+  document.addEventListener('astro:page-load', () => {
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const content = btn.getAttribute('data-copy-content');
+        const icon = btn.querySelector('.copy-icon');
+        const text = btn.querySelector('.copy-text');
+        const originalHTML = btn.innerHTML;
         
-        btn.classList.add('bg-green-50', 'border-green-200', 'text-green-700');
-        icon.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
-        text.textContent = '已复制';
-        
-        setTimeout(() => {
-          btn.classList.remove('bg-green-50', 'border-green-200', 'text-green-700');
-          btn.innerHTML = originalHTML;
-        }, 2000);
-      } catch (err) {
-        console.error('复制失败:', err);
-      }
+        try {
+          await navigator.clipboard.writeText(content || '');
+          
+          btn.classList.add('bg-green-50', 'border-green-200', 'text-green-700');
+          icon.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+          text.textContent = '已复制';
+          
+          setTimeout(() => {
+            btn.classList.remove('bg-green-50', 'border-green-200', 'text-green-700');
+            btn.innerHTML = originalHTML;
+          }, 2000);
+        } catch (err) {
+          console.error('复制失败:', err);
+        }
+      });
     });
   });
 </script>
