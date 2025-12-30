@@ -1,6 +1,10 @@
 name: Deploy to Cloudflare Workers
 
 on:
+  # 代码推送触发 - 提交到本仓库时自动构建部署
+  push:
+    branches:
+      - main
   # Webhook 触发 - 从 TIL 仓库接收更新通知
   repository_dispatch:
     types: [til-updated]
