@@ -56,4 +56,20 @@
     h6 {
         @apply font-heading;
     }
+
+    /* Enhanced code styling */
+    code {
+        font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Droid Sans Mono', 'Source Code Pro', monospace;
+    }
+
+    /* Ensure proper contrast for syntax highlighting */
+    pre {
+        tab-size: 2;
+    }
+
+    /* Smooth transitions for interactive elements */
+    a,
+    button {
+        @apply transition-colors duration-200;
+    }
 }

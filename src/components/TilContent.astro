@@ -1,0 +1,62 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { render } from 'astro:content';
+
+interface Props {
+  note: CollectionEntry<'notes'>;
+}
+
+const { note } = Astro.props;
+const { Content } = await render(note);
+---
+
+<div class="til-content prose prose-zinc max-w-none 
+  prose-headings:font-heading prose-headings:tracking-tight prose-headings:mt-6 prose-headings:mb-3
+  prose-h1:first:mt-0 prose-h2:first:mt-0 prose-h3:first:mt-0
+  prose-p:mb-4 prose-ul:mb-4 prose-ol:mb-4
+  prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+  prose-code:before:content-none prose-code:after:content-none prose-code:bg-muted/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-medium prose-code:border prose-code:border-border/50
+  prose-pre:rounded-lg prose-pre:border prose-pre:border-border prose-pre:bg-muted/30 prose-pre:p-4 prose-pre:shadow-sm
+  prose-blockquote:border-l-4 prose-blockquote:border-primary/20 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-muted-foreground
+  prose-img:rounded-lg prose-img:border prose-img:border-border prose-img:shadow-sm
+  prose-table:border-collapse prose-table:w-full
+  prose-th:border prose-th:border-border prose-th:bg-muted/30 prose-th:px-4 prose-th:py-2 prose-th:text-left prose-th:font-semibold
+  prose-td:border prose-td:border-border prose-td:px-4 prose-td:py-2
+">
+  <Content />
+</div>
+
+<style>
+  .til-content :global(pre code) {
+    background: transparent !important;
+    padding: 0 !important;
+    border: none !important;
+    font-size: 0.875rem;
+    line-height: 1.625;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Droid Sans Mono', 'Source Code Pro', monospace;
+  }
+
+  /* Custom scrollbar for code blocks */
+  .til-content :global(pre) {
+    overflow-x: auto;
+    tab-size: 2;
+  }
+
+  .til-content :global(pre::-webkit-scrollbar) {
+    height: 8px;
+  }
+
+  .til-content :global(pre::-webkit-scrollbar-track) {
+    background: hsl(220 13% 91% / 0.2);
+    border-radius: 0.25rem;
+  }
+
+  .til-content :global(pre::-webkit-scrollbar-thumb) {
+    background: hsl(220 13% 91%);
+    border-radius: 0.25rem;
+  }
+
+  .til-content :global(pre::-webkit-scrollbar-thumb:hover) {
+    background: hsl(220 8.9% 46.1% / 0.3);
+  }
+</style>
