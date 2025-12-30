@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import NotesList from '../../components/NotesList.astro';
+import { getCollection } from 'astro:content';
 import { sortNotesByUlid } from '../../utils/sort';
 
 export async function getStaticPaths() {
