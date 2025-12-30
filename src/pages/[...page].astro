@@ -2,12 +2,10 @@
 import Layout from '../layouts/Layout.astro';
 import NotesList from '../components/NotesList.astro';
 import Pagination from '../components/Pagination.astro';
-import { getCollection } from 'astro:content';
+import { sortNotesByUlid } from '../utils/sort';
 
 export async function getStaticPaths({ paginate }) {
-	const notes = (await getCollection('notes')).sort(
-		(a, b) => b.id.localeCompare(a.id)
-	);
+	const notes = sortNotesByUlid(await getCollection('notes'));
 	
 	return paginate(notes, { pageSize: 20 });
 }

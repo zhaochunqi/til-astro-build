@@ -1,7 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import NotesList from '../../components/NotesList.astro';
-import { getCollection } from 'astro:content';
+import { sortNotesByUlid } from '../../utils/sort';
 
 export async function getStaticPaths() {
   const notes = await getCollection('notes');
@@ -18,7 +18,7 @@ export async function getStaticPaths() {
 
 const { tag } = Astro.params;
 const { notes } = Astro.props;
-const sortedNotes = notes.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const sortedNotes = sortNotesByUlid(notes);
 ---
 
 <Layout title={`Tag: ${tag} - TIL`}>
