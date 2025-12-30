@@ -39,7 +39,7 @@ const relatedNotes = findRelatedNotes(note, allNotes, 3);
             <span>引用此 TIL</span>
           </div>
           <div class="relative rounded-lg border border-border bg-muted/30 pt-8 pb-3 px-3 shadow-sm">
-            <pre class="overflow-x-auto text-xs pr-12"><code style="background: transparent; padding: 0; border: none; font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Droid Sans Mono', 'Source Code Pro', monospace;">[{note.data.title}](https://til.zhaochunqi.com/{note.slug})</code></pre>
+            <pre class="overflow-x-auto text-xs pr-12 font-mono"><code style="background: transparent; padding: 0; border: none;">[{note.data.title}](https://til.zhaochunqi.com/{note.slug})</code></pre>
             <div class="absolute top-2 right-2">
               <CopyButton content={`[${note.data.title}](https://til.zhaochunqi.com/${note.slug})`} size="sm" />
             </div>
