@@ -4,6 +4,8 @@ import Layout from '../layouts/Layout.astro';
 import Tag from '../components/Tag.astro';
 import TilContent from '../components/TilContent.astro';
 import CopyButton from '../components/CopyButton.astro';
+import RelatedNotes from '../components/RelatedNotes.astro';
+import { findRelatedNotes } from '../utils/relatedNotes';
 import { Link } from 'lucide-astro';
 
 export async function getStaticPaths() {
@@ -15,6 +17,8 @@ export async function getStaticPaths() {
 }
 
 const { note } = Astro.props;
+const allNotes = await getCollection('notes');
+const relatedNotes = findRelatedNotes(note, allNotes, 3);
 ---
 
 <Layout title={`${note.data.title} - TIL`}>
@@ -47,6 +51,9 @@ const { note } = Astro.props;
         <TilContent note={note} />
       </div>
 
+      <div class="p-6 md:p-10 pt-0 md:pt-0">
+        <RelatedNotes relatedNotes={relatedNotes} />
+      </div>
 
     </article>
   </div>
