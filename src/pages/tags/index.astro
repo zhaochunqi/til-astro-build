@@ -8,7 +8,7 @@ const tags = [...new Set(notes.flatMap((note) => note.data.tags || []))].sort();
 ---
 
 <Layout title="Tags - TIL">
-  <div class="max-w-3xl mx-auto space-y-6">
+  <div class="max-w-5xl mx-auto space-y-6">
     <h1 class="text-3xl font-bold tracking-tighter">Tags</h1>
     <div class="flex flex-wrap gap-4">
       {tags.map((tag) => <Tag tag={tag} />)}
