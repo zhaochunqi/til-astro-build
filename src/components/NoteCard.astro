@@ -1,6 +1,7 @@
 ---
 import { Calendar } from 'lucide-astro';
 import Tag from './Tag.astro';
+import TilContent from './TilContent.astro';
 import type { CollectionEntry } from 'astro:content';
 
 interface Props {
@@ -10,9 +11,9 @@ interface Props {
 const { note } = Astro.props;
 ---
 
-<div class="rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow">
-  <div class="flex flex-col space-y-1.5 p-6">
-    <div class="flex items-center justify-between">
+<article class="rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-md transition-all duration-200 h-full flex flex-col">
+  <div class="flex flex-col space-y-1.5 p-6 pb-4">
+    <div class="flex items-center justify-between mb-2">
       <div class="flex items-center space-x-2 text-sm text-muted-foreground">
         <Calendar class="size-3" />
         <time datetime={note.data.date.toISOString()}>
@@ -20,13 +21,18 @@ const { note } = Astro.props;
         </time>
       </div>
     </div>
-    <h3 class="text-2xl font-semibold leading-none tracking-tight hover:underline underline-offset-4 decoration-primary/50">
-      <a href={`/${note.slug}`}>{note.data.title}</a>
+    <h3 class="text-xl font-semibold leading-tight tracking-tight">
+      <a href={`/${note.slug}`} class="hover:underline underline-offset-4 decoration-primary/50">{note.data.title}</a>
     </h3>
   </div>
-  <div class="p-6 pt-0 flex flex-wrap gap-2">
+  
+  <div class="px-6 pb-4 flex-1">
+    <TilContent note={note} />
+  </div>
+  
+  <div class="px-6 pb-6 pt-2 flex flex-wrap gap-2 border-t border-border/50 mt-auto">
     {note.data.tags?.map((tag) => (
       <Tag tag={tag} />
     ))}
   </div>
-</div>
+</article>

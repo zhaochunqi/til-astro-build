@@ -1,0 +1,86 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+const notes = (await getCollection('notes')).sort(
+	(a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+
+// Group notes by year and month
+interface GroupedNotes {
+	[year: string]: {
+		[month: string]: typeof notes;
+	};
+}
+
+const groupedNotes: GroupedNotes = {};
+
+notes.forEach((note) => {
+	const date = note.data.date;
+	const year = date.getFullYear().toString();
+	const month = date.toLocaleString('en-US', { month: 'long' });
+	
+	if (!groupedNotes[year]) {
+		groupedNotes[year] = {};
+	}
+	if (!groupedNotes[year][month]) {
+		groupedNotes[year][month] = [];
+	}
+	groupedNotes[year][month].push(note);
+});
+
+// Sort years in descending order
+const sortedYears = Object.keys(groupedNotes).sort((a, b) => parseInt(b) - parseInt(a));
+
+// Month order for sorting
+const monthOrder = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+---
+
+<Layout title="Archive - TIL">
+	<section class="space-y-8">
+		<div class="flex flex-col space-y-2 max-w-3xl mx-auto">
+			<h1 class="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Archive</h1>
+			<p class="text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+				All {notes.length} TIL entries, organized by date.
+			</p>
+		</div>
+
+		<div class="max-w-3xl mx-auto space-y-12">
+			{sortedYears.map((year) => {
+				const months = Object.keys(groupedNotes[year]).sort(
+					(a, b) => monthOrder.indexOf(b) - monthOrder.indexOf(a)
+				);
+				
+				return (
+					<div class="space-y-6">
+						<h2 class="text-2xl font-bold tracking-tight">{year}</h2>
+						{months.map((month) => (
+							<div class="space-y-3">
+								<h3 class="text-lg font-semibold text-muted-foreground">{month}</h3>
+								<ul class="space-y-2 border-l-2 border-border pl-4">
+									{groupedNotes[year][month].map((note) => {
+										const day = note.data.date.toLocaleString('en-US', { 
+											month: 'short', 
+											day: 'numeric' 
+										});
+										return (
+											<li class="group">
+												<a 
+													href={`/${note.slug}`}
+													class="flex items-baseline justify-between gap-4 hover:text-foreground transition-colors"
+												>
+													<span class="group-hover:underline">{note.data.title}</span>
+													<span class="text-sm text-muted-foreground whitespace-nowrap">{day}</span>
+												</a>
+											</li>
+										);
+									})}
+								</ul>
+							</div>
+						))}
+					</div>
+				);
+			})}
+		</div>
+	</section>
+</Layout>

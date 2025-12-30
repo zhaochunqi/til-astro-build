@@ -1,0 +1,16 @@
+---
+import NoteCard from './NoteCard.astro';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  notes: CollectionEntry<'notes'>[];
+}
+
+const { notes } = Astro.props;
+---
+
+<div class="max-w-3xl mx-auto space-y-6">
+  {notes.map((note) => (
+    <NoteCard note={note} />
+  ))}
+</div>
