@@ -44,6 +44,10 @@
         @apply border-border;
     }
 
+    html {
+        scrollbar-gutter: stable;
+    }
+
     body {
         @apply bg-background text-gray-700 font-sans antialiased leading-relaxed;
     }
