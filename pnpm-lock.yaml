@@ -17,6 +17,9 @@ importers:
       '@fontsource/inter':
         specifier: ^5.2.8
         version: 5.2.8
+      '@fontsource/mononoki':
+        specifier: ^5.2.5
+        version: 5.2.5
       '@fontsource/recursive':
         specifier: ^5.2.8
         version: 5.2.8
@@ -250,6 +253,9 @@ packages:
 
   '@fontsource/inter@5.2.8':
     resolution: {integrity: sha512-P6r5WnJoKiNVV+zvW2xM13gNdFhAEpQ9dQJHt3naLvfg+LkF2ldgSLiF4T41lf1SQCM9QmkqPTn4TH568IRagg==}
+
+  '@fontsource/mononoki@5.2.5':
+    resolution: {integrity: sha512-sTHgfpalruDdThonH0GSIBzFqXm2/T0iCuegLrL15ql9XtpGk+aBsmvcnfwnffHQoGaP1QHQMb3Dt9daZ2Nncg==}
 
   '@fontsource/recursive@5.2.8':
     resolution: {integrity: sha512-O5HlyeTIoMZaxKj2phYzB6wXfpWMnaqmk3Qg4n3K4QhzZeEqYr/QPa/8VBKheX36XKjgFNGefJ4qBYBflZoZHg==}
@@ -2096,6 +2102,8 @@ snapshots:
     optional: true
 
   '@fontsource/inter@5.2.8': {}
+
+  '@fontsource/mononoki@5.2.5': {}
 
   '@fontsource/recursive@5.2.8': {}
 

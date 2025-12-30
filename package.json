@@ -13,6 +13,7 @@
     "@astrojs/mdx": "^4.3.13",
     "@astrojs/sitemap": "^3.6.0",
     "@fontsource/inter": "^5.2.8",
+    "@fontsource/mononoki": "^5.2.5",
     "@fontsource/recursive": "^5.2.8",
     "astro": "^5.16.6",
     "lucide-astro": "^0.556.0",
