@@ -1,0 +1,34 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  relatedNotes: CollectionEntry<'notes'>[];
+}
+
+const { relatedNotes } = Astro.props;
+---
+
+{relatedNotes.length > 0 && (
+  <aside class="mt-12 pt-8 border-t border-border" aria-label="Related TIL">
+    <h3 class="text-sm font-medium text-muted-foreground mb-4">
+      Related
+    </h3>
+    
+    <nav>
+      <ul class="space-y-2">
+        {relatedNotes.map((note, index) => (
+          <li>
+            <a
+              href={`/${note.slug}`}
+              class="group flex items-baseline gap-2 text-sm leading-relaxed text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <span class="select-none opacity-50">{index + 1}.</span>
+              <span class="opacity-60">{note.data.date.toISOString().split('T')[0]}</span>
+              <span class="truncate">{note.data.title}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </aside>
+)}
