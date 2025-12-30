@@ -1,11 +1,11 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import NoteCard from '../components/NoteCard.astro';
-import { Search, Loader2 } from 'lucide-astro';
-import { getCollection } from 'astro:content';
-import { sortNotesByUlid } from '../utils/sort';
+import { getCollection } from "astro:content";
+import { Loader2, Search } from "lucide-astro";
+import NoteCard from "../components/NoteCard.astro";
+import Layout from "../layouts/Layout.astro";
+import { sortNotesByUlid } from "../utils/sort";
 
-const notes = await getCollection('notes');
+const notes = await getCollection("notes");
 const sortedNotes = sortNotesByUlid(notes);
 ---
 

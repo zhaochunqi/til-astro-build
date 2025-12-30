@@ -1,9 +1,9 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import { getCollection } from 'astro:content';
-import { sortNotesByUlid } from '../utils/sort';
+import { getCollection } from "astro:content";
+import Layout from "../layouts/Layout.astro";
+import { sortNotesByUlid } from "../utils/sort";
 
-const notes = sortNotesByUlid(await getCollection('notes'));
+const notes = sortNotesByUlid(await getCollection("notes"));
 
 // Group notes by year and month
 interface GroupedNotes {
@@ -17,8 +17,8 @@ const groupedNotes: GroupedNotes = {};
 notes.forEach((note) => {
 	const date = note.data.date;
 	const year = date.getFullYear().toString();
-	const month = date.toLocaleString('en-US', { month: 'long' });
-	
+	const month = date.toLocaleString("en-US", { month: "long" });
+
 	if (!groupedNotes[year]) {
 		groupedNotes[year] = {};
 	}
@@ -29,10 +29,25 @@ notes.forEach((note) => {
 });
 
 // Sort years in descending order
-const sortedYears = Object.keys(groupedNotes).sort((a, b) => parseInt(b) - parseInt(a));
+const sortedYears = Object.keys(groupedNotes).sort(
+	(a, b) => parseInt(b) - parseInt(a),
+);
 
 // Month order for sorting
-const monthOrder = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const monthOrder = [
+	"January",
+	"February",
+	"March",
+	"April",
+	"May",
+	"June",
+	"July",
+	"August",
+	"September",
+	"October",
+	"November",
+	"December",
+];
 ---
 
 <Layout title="Archive - TIL">

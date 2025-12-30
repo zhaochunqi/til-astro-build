@@ -1,20 +1,22 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import NotesList from '../../components/NotesList.astro';
-import { getCollection } from 'astro:content';
-import { sortNotesByUlid } from '../../utils/sort';
+import { getCollection } from "astro:content";
+import NotesList from "../../components/NotesList.astro";
+import Layout from "../../layouts/Layout.astro";
+import { sortNotesByUlid } from "../../utils/sort";
 
 export async function getStaticPaths() {
-  const notes = await getCollection('notes');
-  const uniqueTags = [...new Set(notes.flatMap((note) => note.data.tags || []))];
+	const notes = await getCollection("notes");
+	const uniqueTags = [
+		...new Set(notes.flatMap((note) => note.data.tags || [])),
+	];
 
-  return uniqueTags.map((tag) => {
-    const filteredNotes = notes.filter((note) => note.data.tags?.includes(tag));
-    return {
-      params: { tag },
-      props: { notes: filteredNotes },
-    };
-  });
+	return uniqueTags.map((tag) => {
+		const filteredNotes = notes.filter((note) => note.data.tags?.includes(tag));
+		return {
+			params: { tag },
+			props: { notes: filteredNotes },
+		};
+	});
 }
 
 const { tag } = Astro.params;

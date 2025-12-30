@@ -1,11 +1,11 @@
 ---
-import { Calendar } from 'lucide-astro';
-import Tag from './Tag.astro';
-import TilContent from './TilContent.astro';
-import type { CollectionEntry } from 'astro:content';
+import type { CollectionEntry } from "astro:content";
+import { Calendar } from "lucide-astro";
+import Tag from "./Tag.astro";
+import TilContent from "./TilContent.astro";
 
 interface Props {
-  note: CollectionEntry<'notes'>;
+	note: CollectionEntry<"notes">;
 }
 
 const { note } = Astro.props;

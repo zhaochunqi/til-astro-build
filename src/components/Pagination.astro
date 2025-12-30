@@ -1,13 +1,13 @@
 ---
 export interface Props {
-  page: {
-    url: {
-      prev?: string;
-      next?: string;
-    };
-    currentPage: number;
-    lastPage: number;
-  };
+	page: {
+		url: {
+			prev?: string;
+			next?: string;
+		};
+		currentPage: number;
+		lastPage: number;
+	};
 }
 
 const { page } = Astro.props;
