@@ -15,6 +15,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     name: Build and Deploy
+    permissions:
+      contents: read
+      deployments: write
+      pull-requests: write
     
     steps:
       - name: Checkout
@@ -66,40 +70,119 @@ jobs:
       
       - name: Deploy to Cloudflare Workers
         id: deploy
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v3.14.1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --name til-astro-build --compatibility-date 2025-12-30 --assets ./dist
+          wranglerVersion: '4.35.0'
       
-      - name: Get Worker URL
-        id: get-url
+      - name: Get Deployment URLs
+        id: get-urls
         run: |
-          DETECTED_URL=$(npx wrangler whoami 2>/dev/null | grep -o 'https://[^[:space:]]*\.workers\.dev' | head -1)
-          if [ -n "$DETECTED_URL" ]; then
-            WORKER_URL="$DETECTED_URL"
-            URL_SOURCE="detected"
-            echo "✅ Detected Worker URL: $WORKER_URL"
+          # Use wrangler action output for deployment URL
+          DEPLOYMENT_URL="${{ steps.deploy.outputs.deployment-url }}"
+          if [ -n "$DEPLOYMENT_URL" ]; then
+            WORKER_URL="$DEPLOYMENT_URL"
+            URL_SOURCE="action-output"
+            echo "✅ Using deployment URL from action: $WORKER_URL"
           else
-            WORKER_URL="https://til-astro-build.harchiko.workers.dev"
-            URL_SOURCE="default"
-            echo "⚠️ Using default Worker URL: $WORKER_URL"
+            # Fallback: detect from wrangler whoami
+            DETECTED_URL=$(npx wrangler whoami 2>/dev/null | grep -o 'https://[^[:space:]]*\.workers\.dev' | head -1)
+            if [ -n "$DETECTED_URL" ]; then
+              WORKER_URL="$DETECTED_URL"
+              URL_SOURCE="detected"
+              echo "✅ Detected Worker URL: $WORKER_URL"
+            else
+              WORKER_URL="https://til-astro-build.harchiko.workers.dev"
+              URL_SOURCE="default"
+              echo "⚠️ Using default Worker URL: $WORKER_URL"
+            fi
           fi
+          
           echo "worker_url=$WORKER_URL" >> $GITHUB_OUTPUT
           echo "url_source=$URL_SOURCE" >> $GITHUB_OUTPUT
+          
+          # For branch deployments, generate preview URL
+          if [[ "${{ github.ref_name }}" != "main" ]]; then
+            PREVIEW_URL="$WORKER_URL?branch=${{ github.ref_name }}"
+            echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
+            echo "🔗 Generated preview URL: $PREVIEW_URL"
+          fi
       
+      - name: Get Wrangler Version
+        id: wrangler-version
+        run: |
+          WRANGLER_VERSION=$(npx wrangler --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+          if [ -n "$WRANGLER_VERSION" ]; then
+            echo "version=$WRANGLER_VERSION" >> $GITHUB_OUTPUT
+            echo "🔧 Wrangler version: $WRANGLER_VERSION"
+          else
+            echo "version=unknown" >> $GITHUB_OUTPUT
+            echo "⚠️ Could not detect wrangler version"
+          fi
+
       - name: Deployment Summary
         run: |
           echo "### 🚀 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Worker**: til-astro-build" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.get-url.outputs.url_source }}" = "detected" ]; then
-            echo "- **URL**: ${{ steps.get-url.outputs.worker_url }} ✅" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- **URL**: ${{ steps.get-url.outputs.worker_url }} ⚠️ (default)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Wrangler Version**: ${{ steps.wrangler-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          
+          # Display deployment URL with source indicator
+          URL_SOURCE="${{ steps.get-urls.outputs.url_source }}"
+          WORKER_URL="${{ steps.get-urls.outputs.worker_url }}"
+          
+          case "$URL_SOURCE" in
+            "action-output")
+              echo "- **Deployment URL**: [$WORKER_URL]($WORKER_URL) ✅" >> $GITHUB_STEP_SUMMARY
+              ;;
+            "detected")
+              echo "- **Deployment URL**: [$WORKER_URL]($WORKER_URL) 🔍" >> $GITHUB_STEP_SUMMARY
+              ;;
+            *)
+              echo "- **Deployment URL**: [$WORKER_URL]($WORKER_URL) ⚠️ (fallback)" >> $GITHUB_STEP_SUMMARY
+              ;;
+          esac
+          
+          # Add preview URL for non-main branches
+          if [[ "${{ github.ref_name }}" != "main" ]]; then
+            PREVIEW_URL="${{ steps.get-urls.outputs.preview_url }}"
+            echo "- **Preview URL**: [$PREVIEW_URL]($PREVIEW_URL) 🔗 (branch preview)" >> $GITHUB_STEP_SUMMARY
           fi
+          
           echo "- **Build Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           if [ -n "${{ github.event.client_payload.sha }}" ]; then
             echo "- **TIL Commit**: ${{ github.event.client_payload.sha }}" >> $GITHUB_STEP_SUMMARY
           fi
           echo "- **Triggered by**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Comment on PR (if applicable)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const worker_url = '${{ steps.get-urls.outputs.worker_url }}';
+            const url_source = '${{ steps.get-urls.outputs.url_source }}';
+            const preview_url = '${{ steps.get-urls.outputs.preview_url }}';
+            const commit_sha = '${{ github.sha }}';
+            
+            let comment = `## 🚀 Deployment Preview Available\n\n`;
+            comment += `**Worker**: til-astro-build\n`;
+            comment += `**Deployment URL**: ${worker_url}\n`;
+            
+            if (preview_url) {
+              comment += `**Preview URL**: ${preview_url} (branch preview)\n`;
+            }
+            
+            comment += `\n**Commit**: ${commit_sha.substring(0, 7)}\n`;
+            comment += `\n---\n`;
+            comment += `*This comment was automatically generated by the deployment workflow.*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
