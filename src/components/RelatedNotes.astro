@@ -22,8 +22,8 @@ const { relatedNotes } = Astro.props;
               href={`/${note.slug}`}
               class="group flex items-baseline gap-2 text-sm leading-relaxed text-muted-foreground hover:text-foreground transition-colors"
             >
-              <span class="select-none opacity-50">{index + 1}.</span>
-              <span class="opacity-60">{note.data.date.toISOString().split('T')[0]}</span>
+              <span class="select-none opacity-50 font-mono">{index + 1}.</span>
+              <span class="opacity-60 font-mono">{note.data.date.toISOString().split('T')[0]}</span>
               <span class="truncate">{note.data.title}</span>
             </a>
           </li>
