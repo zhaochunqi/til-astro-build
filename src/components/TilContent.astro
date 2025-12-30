@@ -1,6 +1,7 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import { render } from 'astro:content';
+import CopyButton from './CopyButton.astro';
 
 interface Props {
   note: CollectionEntry<'notes'>;
@@ -16,7 +17,7 @@ const { Content } = await render(note);
   prose-p:mb-4 prose-ul:mb-4 prose-ol:mb-4
   prose-a:text-primary prose-a:no-underline hover:prose-a:underline
   prose-code:before:content-none prose-code:after:content-none prose-code:bg-muted/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-medium prose-code:border prose-code:border-border/50
-  prose-pre:rounded-lg prose-pre:border prose-pre:border-border prose-pre:bg-muted/30 prose-pre:p-4 prose-pre:shadow-sm
+  prose-pre:rounded-lg prose-pre:border prose-pre:border-border prose-pre:bg-muted/30 prose-pre:shadow-sm prose-pre:relative
   prose-blockquote:border-l-4 prose-blockquote:border-primary/20 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-muted-foreground
   prose-img:rounded-lg prose-img:border prose-img:border-border prose-img:shadow-sm
   prose-table:border-collapse prose-table:w-full
@@ -25,6 +26,62 @@ const { Content } = await render(note);
 ">
   <Content />
 </div>
+
+<script>
+  // 添加复制按钮到所有代码块
+  document.addEventListener('DOMContentLoaded', () => {
+    const codeBlocks = document.querySelectorAll('.til-content pre');
+    
+    codeBlocks.forEach((block) => {
+      // 避免重复添加
+      if (block.querySelector('.copy-button')) return;
+      
+      const code = block.querySelector('code');
+      if (!code) return;
+      
+      // 创建容器包裹代码块
+      const wrapper = document.createElement('div');
+      wrapper.className = 'relative';
+      
+      // 将当前代码块移入容器
+      block.parentNode.insertBefore(wrapper, block);
+      wrapper.appendChild(block);
+      
+      // 添加复制按钮
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'copy-button absolute top-2 right-2 inline-flex items-center gap-1 rounded-md border border-border bg-background hover:bg-muted transition-all duration-200 px-1.5 py-0.5 text-xs';
+      copyBtn.innerHTML = `
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="9" height="13" x="9" y="9" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        <span class="copy-text">复制</span>
+      `;
+      copyBtn.title = "复制到剪贴板";
+      
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(code.textContent || '');
+          
+          // 动画反馈
+          copyBtn.classList.add('copied', 'bg-green-50', 'border-green-200', 'text-green-700');
+          copyBtn.querySelector('.copy-text').textContent = '已复制';
+          copyBtn.querySelector('svg').innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+          
+          setTimeout(() => {
+            copyBtn.classList.remove('copied', 'bg-green-50', 'border-green-200', 'text-green-700');
+            copyBtn.querySelector('.copy-text').textContent = '复制';
+            copyBtn.querySelector('svg').innerHTML = '<rect width="9" height="13" x="9" y="9" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>';
+          }, 2000);
+        } catch (err) {
+          console.error('复制失败:', err);
+        }
+      });
+      
+      wrapper.appendChild(copyBtn);
+    });
+  });
+</script>
 
 <style>
   .til-content :global(pre code) {
@@ -40,6 +97,11 @@ const { Content } = await render(note);
   .til-content :global(pre) {
     overflow-x: auto;
     tab-size: 2;
+  }
+  
+  /* Code block wrapper styles */
+  .til-content :global(.relative > pre) {
+    margin: 0;
   }
 
   .til-content :global(pre::-webkit-scrollbar) {
