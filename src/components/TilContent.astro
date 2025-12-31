@@ -193,6 +193,19 @@ const { Content } = await render(note);
     75% { transform: translateX(2px); }
   }
 
+  /* Mobile touch target fixes for headings */
+  .til-content :global(h1 > a, h2 > a, h3 > a) {
+    display: inline-block;
+    padding: 4px 0;
+    min-height: 44px;
+  }
+
+  .til-content :global(.prose h1), 
+  .til-content :global(.prose h2), 
+  .til-content :global(.prose h3) {
+    min-height: 44px;
+  }
+
   /* Mobile overflow fixes */
   .til-content :global(a) {
     word-break: break-word;
