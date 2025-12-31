@@ -5,10 +5,6 @@ on:
   push:
     branches:
       - main
-  # Pull Request 触发 - 生成部署预览并评论
-  pull_request:
-    branches:
-      - main
   # Webhook 触发 - 从 TIL 仓库接收更新通知
   repository_dispatch:
     types: [til-updated]
@@ -22,7 +18,6 @@ jobs:
     permissions:
       contents: read
       deployments: write
-      pull-requests: write
 
     steps:
       - name: Checkout
@@ -72,72 +67,13 @@ jobs:
       - name: Build site
         run: pnpm run build
 
-      - name: Clean Branch Name for Preview
-        id: clean-branch
-        run: |
-          # Get the correct branch name for different trigger events
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            # For PRs, get the source branch from the pull_request event
-            BRANCH_NAME="${{ github.head_ref }}"
-          elif [[ "${{ github.ref_type }}" == "branch" ]]; then
-            # For push events, use the ref name
-            BRANCH_NAME="${{ github.ref_name }}"
-          else
-            # Fallback
-            BRANCH_NAME="main"
-          fi
-          
-          if [[ "$BRANCH_NAME" != "main" ]]; then
-            # Clean branch name for DNS-safe URL (replace invalid DNS characters)
-            CLEAN_BRANCH=$(echo "$BRANCH_NAME" | \
-              sed 's|/|-|g' | \
-              sed 's|_|-|g' | \
-              sed 's|\.|-|g' | \
-              sed 's|[^a-zA-Z0-9-]||g' | \
-              sed 's|--*|-|g' | \
-              sed 's|^-||g' | \
-              sed 's|-$||g' | \
-              tr '[:upper:]' '[:lower:]')
-            echo "clean_branch=$CLEAN_BRANCH" >> $GITHUB_OUTPUT
-            echo "🏷️ Original branch: $BRANCH_NAME"
-            echo "🧹 Cleaned branch: $CLEAN_BRANCH"
-          else
-            echo "clean_branch=main" >> $GITHUB_OUTPUT
-            echo "🏷️ Branch: main (production)"
-          fi
-
       - name: Deploy to Cloudflare Workers
-        id: deploy
         uses: cloudflare/wrangler-action@v3.14.1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: ${{ steps.clean-branch.outputs.clean_branch == 'main' && 'deploy --name til --compatibility-date 2025-12-30 --assets ./dist' || format('versions upload --name til --compatibility-date 2025-12-30 --assets ./dist --preview-alias {0}', steps.clean-branch.outputs.clean_branch) }}
+          command: deploy --name til --compatibility-date 2025-12-30 --assets ./dist
           wranglerVersion: "4.35.0"
-
-      - name: Get Deployment URLs
-        id: get-urls
-        run: |
-          # Base worker URL
-          BASE_URL="https://til.harchiko.workers.dev"
-
-          if [[ "${{ github.ref_name }}" == "main" ]]; then
-            # Main branch - production URL
-            WORKER_URL="$BASE_URL"
-            URL_SOURCE="production"
-            echo "✅ Production deployment URL: $WORKER_URL"
-          else
-            # Feature branch - preview URL using Cloudflare's branch preview pattern
-            CLEAN_BRANCH="${{ steps.clean-branch.outputs.clean_branch }}"
-            PREVIEW_URL="https://$CLEAN_BRANCH-til.harchiko.workers.dev"
-            WORKER_URL="$PREVIEW_URL"
-            URL_SOURCE="branch-preview"
-            echo "✅ Branch preview URL: $WORKER_URL"
-            echo "🏷️ Preview alias: $CLEAN_BRANCH"
-          fi
-
-          echo "worker_url=$WORKER_URL" >> $GITHUB_OUTPUT
-          echo "url_source=$URL_SOURCE" >> $GITHUB_OUTPUT
 
       - name: Get Wrangler Version
         id: wrangler-version
@@ -157,65 +93,9 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Worker**: til-astro-build" >> $GITHUB_STEP_SUMMARY
           echo "- **Wrangler Version**: ${{ steps.wrangler-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-
-          # Display deployment URL with source indicator
-          URL_SOURCE="${{ steps.get-urls.outputs.url_source }}"
-          WORKER_URL="${{ steps.get-urls.outputs.worker_url }}"
-
-          case "$URL_SOURCE" in
-            "production")
-              echo "- **Production URL**: [$WORKER_URL]($WORKER_URL) 🚀" >> $GITHUB_STEP_SUMMARY
-              ;;
-            "branch-preview")
-              echo "- **Branch Preview URL**: [$WORKER_URL]($WORKER_URL) 🔗" >> $GITHUB_STEP_SUMMARY
-              ;;
-            *)
-              echo "- **Deployment URL**: [$WORKER_URL]($WORKER_URL) ⚠️" >> $GITHUB_STEP_SUMMARY
-              ;;
-          esac
-
-          # Add additional branch info for non-main branches
-          if [[ "${{ github.ref_name }}" != "main" ]]; then
-            echo "- **Branch Name**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-            echo "- **Preview Type**: Cloudflare Branch Preview" >> $GITHUB_STEP_SUMMARY
-          fi
-
+          echo "- **Production URL**: [https://til.harchiko.workers.dev](https://til.harchiko.workers.dev) 🚀" >> $GITHUB_STEP_SUMMARY
           echo "- **Build Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           if [ -n "${{ github.event.client_payload.sha }}" ]; then
             echo "- **TIL Commit**: ${{ github.event.client_payload.sha }}" >> $GITHUB_STEP_SUMMARY
           fi
           echo "- **Triggered by**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-
-      - name: Comment on PR (if applicable)
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const worker_url = '${{ steps.get-urls.outputs.worker_url }}';
-            const url_source = '${{ steps.get-urls.outputs.url_source }}';
-            const commit_sha = '${{ github.sha }}';
-            const branch_name = '${{ github.ref_name }}';
-
-            let comment = `## 🚀 Deployment Preview Available\n\n`;
-            comment += `**Worker**: til-astro-build\n\n`;
-
-            if (url_source === 'branch-preview') {
-              comment += `### 🔗 Branch Preview URL\n`;
-              comment += `${worker_url}\n\n`;
-              comment += `**Branch**: \`${branch_name}\`\n`;
-              comment += `**Note**: This is a Cloudflare branch preview deployment. The URL will remain stable for this branch.\n\n`;
-            } else {
-              comment += `### 🚀 Production URL\n`;
-              comment += `${worker_url}\n\n`;
-            }
-
-            comment += `**Commit**: \`${commit_sha.substring(0, 7)}\`\n`;
-            comment += `\n---\n`;
-            comment += `*This comment was automatically generated by the deployment workflow.*`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });

@@ -29,6 +29,27 @@ const { title } = Astro.props;
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
 		<ClientRouter />
+		
+		<!-- Partytown 配置 -->
+		<script type="module">
+			import { partytown } from '@builder.io/partytown/integration';
+			partytown = {
+				debug: false,
+				expensive: true,
+				forward: ['dataLayer.push', 'gtag', 'fbq'],
+				resolveUrl(url, location, type) {
+					if (type === 'script') {
+						const proxyUrl = new URL('https://cdn.jsdelivr.net/npm/@builder.io/partytown/lib/partytown.js');
+						proxyUrl.searchParams.set('url', url);
+						return proxyUrl;
+					}
+					return url;
+				}
+			};
+		</script>
+		
+		<!-- 示例：将来的第三方脚本可以加上 type="text/partytown" -->
+		<!-- <script type="text/partytown" src="https://www.google-analytics.com/analytics.js"></script> -->
 	</head>
 	<body class="min-h-screen flex flex-col bg-background text-foreground antialiased">
 		<Header />

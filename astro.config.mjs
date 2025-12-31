@@ -3,13 +3,14 @@
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
+import partytown from "@astrojs/partytown";
 import { defineConfig } from "astro/config";
 import sharp from "sharp";
 
 // https://astro.build/config
 export default defineConfig({
 	site: "https://til.zhaochunqi.com",
-	integrations: [mdx(), sitemap()],
+	integrations: [mdx({ optimize: true }), sitemap(), partytown()],
 	markdown: {
 		shikiConfig: {
 			theme: "github-light-high-contrast",
@@ -18,6 +19,10 @@ export default defineConfig({
 	},
 	image: {
 		service: sharp(),
+	},
+	experimental: {
+		svgo: true,
+		contentIntellisense: true,
 	},
 	vite: {
 		plugins: [tailwindcss()],
