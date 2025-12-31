@@ -11,11 +11,12 @@ const { note } = Astro.props;
 const { Content } = await render(note);
 ---
 
-<div class="til-content prose prose-zinc max-w-none 
+<div class="til-content prose prose-zinc max-w-none
   prose-headings:font-heading prose-headings:tracking-tight prose-headings:mt-6 prose-headings:mb-3
   prose-h1:first:mt-0 prose-h2:first:mt-0 prose-h3:first:mt-0
   prose-p:mb-4 prose-ul:mb-4 prose-ol:mb-4
   prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+  prose-a:break-words prose-a:overflow-wrap-anywhere
   prose-code:before:content-none prose-code:after:content-none prose-code:bg-muted/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-medium prose-code:border prose-code:border-border/50
   prose-pre:rounded-lg prose-pre:border prose-pre:border-border prose-pre:bg-muted/30 prose-pre:shadow-sm prose-pre:relative
   prose-blockquote:border-l-4 prose-blockquote:border-primary/20 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-muted-foreground
@@ -190,5 +191,21 @@ const { Content } = await render(note);
     0%, 100% { transform: translateX(0); }
     25% { transform: translateX(-2px); }
     75% { transform: translateX(2px); }
+  }
+
+  /* Mobile overflow fixes */
+  .til-content :global(a) {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .til-content :global(code) {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .til-content :global(p) {
+    word-break: break-word;
+    overflow-wrap: anywhere;
   }
 </style>
