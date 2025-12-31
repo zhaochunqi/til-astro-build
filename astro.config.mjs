@@ -4,6 +4,7 @@ import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
+import sharp from "sharp";
 
 // https://astro.build/config
 export default defineConfig({
@@ -14,6 +15,9 @@ export default defineConfig({
 			theme: "github-light-high-contrast",
 			wrap: true,
 		},
+	},
+	image: {
+		service: sharp(),
 	},
 	vite: {
 		plugins: [tailwindcss()],

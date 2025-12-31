@@ -61,10 +61,46 @@ const { Content } = await render(note);
       copyBtn.title = "复制到剪贴板";
       
       copyBtn.addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText(code.textContent || '');
+        const textToCopy = code.textContent || '';
+        
+        const copyToClipboard = async (text: string) => {
+          // 优先使用现代 Clipboard API
+          if (navigator.clipboard && window.isSecureContext) {
+            try {
+              await navigator.clipboard.writeText(text);
+              return true;
+            } catch (err) {
+              console.warn('Clipboard API failed:', err);
+            }
+          }
           
-          // 动画反馈
+          // 备用方案：使用 execCommand (已废弃但仍有兼容性)
+          if (document.queryCommandSupported?.('copy')) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            textArea.setAttribute('readonly', '');
+            document.body.appendChild(textArea);
+            
+            try {
+              textArea.select();
+              const success = document.execCommand('copy');
+              document.body.removeChild(textArea);
+              return success;
+            } catch (err) {
+              document.body.removeChild(textArea);
+              console.warn('execCommand failed:', err);
+            }
+          }
+          
+          return false;
+        };
+        
+        const success = await copyToClipboard(textToCopy);
+        
+        if (success) {
+          // 成功反馈
           copyBtn.classList.add('copied', 'bg-green-50', 'border-green-200', 'text-green-700');
           copyBtn.querySelector('.copy-text').textContent = '已复制';
           copyBtn.querySelector('svg').innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
@@ -74,12 +110,34 @@ const { Content } = await render(note);
             copyBtn.querySelector('.copy-text').textContent = '复制';
             copyBtn.querySelector('svg').innerHTML = '<rect width="9" height="13" x="9" y="9" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>';
           }, 2000);
-        } catch (err) {
-          console.error('复制失败:', err);
+        } else {
+          // 失败时改变按钮状态提示用户
+          copyBtn.classList.add('error', 'bg-red-50', 'border-red-200', 'text-red-700');
+          copyBtn.querySelector('.copy-text').textContent = '复制失败';
+          setTimeout(() => {
+            copyBtn.classList.remove('error', 'bg-red-50', 'border-red-200', 'text-red-700');
+            copyBtn.querySelector('.copy-text').textContent = '复制';
+          }, 2000);
         }
       });
       
       wrapper.appendChild(copyBtn);
+    });
+    
+    // 处理图像懒加载和优化
+    const images = document.querySelectorAll('.til-content img');
+    images.forEach(img => {
+      // 添加加载指示器
+      img.loading = 'lazy';
+      
+      // 添加错误处理
+      img.onerror = () => {
+        img.style.display = 'none';
+        const errorSpan = document.createElement('span');
+        errorSpan.className = 'text-sm text-muted-foreground italic';
+        errorSpan.textContent = '图像加载失败';
+        img.parentNode?.replaceChild(errorSpan, img);
+      };
     });
   });
 </script>
@@ -121,5 +179,16 @@ const { Content } = await render(note);
 
   .til-content :global(pre::-webkit-scrollbar-thumb:hover) {
     background: hsl(220 8.9% 46.1% / 0.3);
+  }
+
+  /* 复制按钮错误状态 */
+  .til-content :global(button.error) {
+    animation: shake 0.5s ease-in-out;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
   }
 </style>

@@ -72,47 +72,66 @@ jobs:
       - name: Build site
         run: pnpm run build
 
+      - name: Clean Branch Name for Preview
+        id: clean-branch
+        run: |
+          if [[ "${{ github.ref_name }}" != "main" ]]; then
+            # Clean branch name for DNS-safe URL (replace invalid DNS characters)
+            CLEAN_BRANCH=$(echo "${{ github.ref_name }}" | \
+              sed 's|/|-|g' | \
+              sed 's|_|-|g' | \
+              sed 's|\.|-|g' | \
+              sed 's|[^a-zA-Z0-9-]||g' | \
+              sed 's|--*|-|g' | \
+              sed 's|^-||g' | \
+              sed 's|-$||g' | \
+              tr '[:upper:]' '[:lower:]')
+            echo "clean_branch=$CLEAN_BRANCH" >> $GITHUB_OUTPUT
+            echo "🏷️ Original branch: ${{ github.ref_name }}"
+            echo "🧹 Cleaned branch: $CLEAN_BRANCH"
+          else
+            echo "clean_branch=main" >> $GITHUB_OUTPUT
+          fi
+
       - name: Deploy to Cloudflare Workers
         id: deploy
         uses: cloudflare/wrangler-action@v3.14.1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --name til --compatibility-date 2025-12-30 --assets ./dist
+          command: |
+            if [[ "${{ github.ref_name }}" == "main" ]]; then
+              # Main branch - production deployment
+              deploy --name til --compatibility-date 2025-12-30 --assets ./dist
+            else
+              # Feature branch - deployment with preview alias
+              deploy --name til --compatibility-date 2025-12-30 --assets ./dist --preview-alias ${{ steps.clean-branch.outputs.clean_branch }}
+            fi
           wranglerVersion: "4.35.0"
 
       - name: Get Deployment URLs
         id: get-urls
         run: |
-          # Use wrangler action output for deployment URL
-          DEPLOYMENT_URL="${{ steps.deploy.outputs.deployment-url }}"
-          if [ -n "$DEPLOYMENT_URL" ]; then
-            WORKER_URL="$DEPLOYMENT_URL"
-            URL_SOURCE="action-output"
-            echo "✅ Using deployment URL from action: $WORKER_URL"
+          # Base worker URL
+          BASE_URL="https://til.harchiko.workers.dev"
+
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            # Main branch - production URL
+            WORKER_URL="$BASE_URL"
+            URL_SOURCE="production"
+            echo "✅ Production deployment URL: $WORKER_URL"
           else
-            # Fallback: detect from wrangler whoami
-            DETECTED_URL=$(npx wrangler whoami 2>/dev/null | grep -o 'https://[^[:space:]]*\.workers\.dev' | head -1)
-            if [ -n "$DETECTED_URL" ]; then
-              WORKER_URL="$DETECTED_URL"
-              URL_SOURCE="detected"
-              echo "✅ Detected Worker URL: $WORKER_URL"
-            else
-              WORKER_URL="https://til.harchiko.workers.dev"
-              URL_SOURCE="default"
-              echo "⚠️ Using default Worker URL: $WORKER_URL"
-            fi
+            # Feature branch - preview URL using Cloudflare's branch preview pattern
+            CLEAN_BRANCH="${{ steps.clean-branch.outputs.clean_branch }}"
+            PREVIEW_URL="https://$CLEAN_BRANCH-til.harchiko.workers.dev"
+            WORKER_URL="$PREVIEW_URL"
+            URL_SOURCE="branch-preview"
+            echo "✅ Branch preview URL: $WORKER_URL"
+            echo "🏷️ Preview alias: $CLEAN_BRANCH"
           fi
 
           echo "worker_url=$WORKER_URL" >> $GITHUB_OUTPUT
           echo "url_source=$URL_SOURCE" >> $GITHUB_OUTPUT
-
-          # For branch deployments, generate preview URL
-          if [[ "${{ github.ref_name }}" != "main" ]]; then
-            PREVIEW_URL="$WORKER_URL?branch=${{ github.ref_name }}"
-            echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
-            echo "🔗 Generated preview URL: $PREVIEW_URL"
-          fi
 
       - name: Get Wrangler Version
         id: wrangler-version
@@ -138,21 +157,21 @@ jobs:
           WORKER_URL="${{ steps.get-urls.outputs.worker_url }}"
 
           case "$URL_SOURCE" in
-            "action-output")
-              echo "- **Deployment URL**: [$WORKER_URL]($WORKER_URL) ✅" >> $GITHUB_STEP_SUMMARY
+            "production")
+              echo "- **Production URL**: [$WORKER_URL]($WORKER_URL) 🚀" >> $GITHUB_STEP_SUMMARY
               ;;
-            "detected")
-              echo "- **Deployment URL**: [$WORKER_URL]($WORKER_URL) 🔍" >> $GITHUB_STEP_SUMMARY
+            "branch-preview")
+              echo "- **Branch Preview URL**: [$WORKER_URL]($WORKER_URL) 🔗" >> $GITHUB_STEP_SUMMARY
               ;;
             *)
-              echo "- **Deployment URL**: [$WORKER_URL]($WORKER_URL) ⚠️ (fallback)" >> $GITHUB_STEP_SUMMARY
+              echo "- **Deployment URL**: [$WORKER_URL]($WORKER_URL) ⚠️" >> $GITHUB_STEP_SUMMARY
               ;;
           esac
 
-          # Add preview URL for non-main branches
+          # Add additional branch info for non-main branches
           if [[ "${{ github.ref_name }}" != "main" ]]; then
-            PREVIEW_URL="${{ steps.get-urls.outputs.preview_url }}"
-            echo "- **Preview URL**: [$PREVIEW_URL]($PREVIEW_URL) 🔗 (branch preview)" >> $GITHUB_STEP_SUMMARY
+            echo "- **Branch Name**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Preview Type**: Cloudflare Branch Preview" >> $GITHUB_STEP_SUMMARY
           fi
 
           echo "- **Build Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
@@ -160,7 +179,6 @@ jobs:
             echo "- **TIL Commit**: ${{ github.event.client_payload.sha }}" >> $GITHUB_STEP_SUMMARY
           fi
           echo "- **Triggered by**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
 
       - name: Comment on PR (if applicable)
         if: github.event_name == 'pull_request'
@@ -169,18 +187,23 @@ jobs:
           script: |
             const worker_url = '${{ steps.get-urls.outputs.worker_url }}';
             const url_source = '${{ steps.get-urls.outputs.url_source }}';
-            const preview_url = '${{ steps.get-urls.outputs.preview_url }}';
             const commit_sha = '${{ github.sha }}';
+            const branch_name = '${{ github.ref_name }}';
 
             let comment = `## 🚀 Deployment Preview Available\n\n`;
-            comment += `**Worker**: til-astro-build\n`;
-            comment += `**Deployment URL**: ${worker_url}\n`;
+            comment += `**Worker**: til-astro-build\n\n`;
 
-            if (preview_url) {
-              comment += `**Preview URL**: ${preview_url} (branch preview)\n`;
+            if (url_source === 'branch-preview') {
+              comment += `### 🔗 Branch Preview URL\n`;
+              comment += `${worker_url}\n\n`;
+              comment += `**Branch**: \`${branch_name}\`\n`;
+              comment += `**Note**: This is a Cloudflare branch preview deployment. The URL will remain stable for this branch.\n\n`;
+            } else {
+              comment += `### 🚀 Production URL\n`;
+              comment += `${worker_url}\n\n`;
             }
 
-            comment += `\n**Commit**: ${commit_sha.substring(0, 7)}\n`;
+            comment += `**Commit**: \`${commit_sha.substring(0, 7)}\`\n`;
             comment += `\n---\n`;
             comment += `*This comment was automatically generated by the deployment workflow.*`;
 
