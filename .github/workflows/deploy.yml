@@ -99,7 +99,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --name til --compatibility-date 2025-12-30 --assets ./dist ${{ github.ref_name == 'main' && '' || format('--preview-alias {0}', steps.clean-branch.outputs.clean_branch) }}
+          command: ${{ github.ref_name == 'main' && 'deploy --name til --compatibility-date 2025-12-30 --assets ./dist' || format('versions upload --name til --compatibility-date 2025-12-30 --assets ./dist --preview-alias {0}', steps.clean-branch.outputs.clean_branch) }}
           wranglerVersion: "4.35.0"
 
       - name: Get Deployment URLs
