@@ -1,0 +1,20 @@
+---
+import { Home, Archive, Tag } from "lucide-astro";
+---
+
+<nav class="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur sm:hidden">
+  <div class="flex justify-around py-2 px-4">
+    <a href="/" class="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors min-h-[60px] min-w-[60px] justify-center">
+      <Home class="size-6" />
+      <span class="text-xs">Home</span>
+    </a>
+    <a href="/archive" class="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors min-h-[60px] min-w-[60px] justify-center">
+      <Archive class="size-6" />
+      <span class="text-xs">Archive</span>
+    </a>
+    <a href="/tags" class="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors min-h-[60px] min-w-[60px] justify-center">
+      <Tag class="size-6" />
+      <span class="text-xs">Tags</span>
+    </a>
+  </div>
+</nav>

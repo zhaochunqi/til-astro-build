@@ -25,15 +25,12 @@ const relatedNotes = findRelatedNotes(note, allNotes, 3);
   <div class="max-w-4xl mx-auto">
     <article class="rounded-lg border bg-card text-card-foreground shadow-sm">
       <div class="flex flex-col space-y-1.5 p-6 md:p-10 pb-2 md:pb-2">
-        <div class="flex items-center justify-between text-sm text-muted-foreground mb-4">
-          <time datetime={note.data.date.toISOString()}>
+        <div class="flex justify-end text-sm text-muted-foreground mb-4">
+          <time datetime={note.data.date.toISOString()} class="hidden sm:block">
             {note.data.date.toISOString().split('T')[0]}
           </time>
-          <div class="flex gap-2">
-            {note.data.tags?.map((tag) => <Tag tag={tag} />)}
-          </div>
         </div>
-        <div class="relative">
+        <div class="relative hidden sm:block">
           <div class="absolute top-2 left-3 flex items-center gap-1 text-[10px] text-muted-foreground/60 select-none font-mono">
             <Link class="size-3" />
             <span>引用此 TIL</span>
@@ -52,6 +49,11 @@ const relatedNotes = findRelatedNotes(note, allNotes, 3);
       </div>
 
       <div class="p-6 md:p-10 pt-0 md:pt-0">
+        {note.data.tags && note.data.tags.length > 0 && (
+          <div class="flex flex-wrap gap-2 mb-8">
+            {note.data.tags.map((tag) => <Tag tag={tag} />)}
+          </div>
+        )}
         <RelatedNotes relatedNotes={relatedNotes} />
       </div>
 

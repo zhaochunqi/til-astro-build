@@ -153,6 +153,12 @@ const { Content } = await render(note);
     font-family: var(--font-mono);
   }
 
+  @media (max-width: 640px) {
+    .til-content :global(pre code) {
+      font-size: 0.8125rem;
+    }
+  }
+
   /* Custom scrollbar for code blocks */
   .til-content :global(pre) {
     overflow-x: auto;

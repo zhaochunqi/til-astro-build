@@ -15,16 +15,19 @@ const { relatedNotes } = Astro.props;
     </h3>
     
     <nav>
-      <ul class="space-y-2">
+      <ul class="space-y-3">
         {relatedNotes.map((note, index) => (
           <li>
             <a
               href={`/${note.slug}`}
-              class="group flex items-baseline gap-2 text-sm leading-relaxed text-muted-foreground hover:text-foreground transition-colors"
+              class="block p-3 rounded-lg border border-border bg-card hover:bg-muted/30 transition-colors min-h-[60px]"
             >
-              <span class="select-none opacity-50 font-mono">{index + 1}.</span>
-              <span class="opacity-60 font-mono">{note.data.date.toISOString().split('T')[0]}</span>
-              <span class="truncate">{note.data.title}</span>
+              <div class="text-xs text-muted-foreground mb-1 font-mono">
+                {note.data.date.toISOString().split('T')[0]}
+              </div>
+              <div class="text-sm font-medium text-foreground line-clamp-2">
+                {note.data.title}
+              </div>
             </a>
           </li>
         ))}
