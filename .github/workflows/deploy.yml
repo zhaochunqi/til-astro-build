@@ -75,9 +75,21 @@ jobs:
       - name: Clean Branch Name for Preview
         id: clean-branch
         run: |
-          if [[ "${{ github.ref_name }}" != "main" ]]; then
+          # Get the correct branch name for different trigger events
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            # For PRs, get the source branch from the pull_request event
+            BRANCH_NAME="${{ github.head_ref }}"
+          elif [[ "${{ github.ref_type }}" == "branch" ]]; then
+            # For push events, use the ref name
+            BRANCH_NAME="${{ github.ref_name }}"
+          else
+            # Fallback
+            BRANCH_NAME="main"
+          fi
+          
+          if [[ "$BRANCH_NAME" != "main" ]]; then
             # Clean branch name for DNS-safe URL (replace invalid DNS characters)
-            CLEAN_BRANCH=$(echo "${{ github.ref_name }}" | \
+            CLEAN_BRANCH=$(echo "$BRANCH_NAME" | \
               sed 's|/|-|g' | \
               sed 's|_|-|g' | \
               sed 's|\.|-|g' | \
@@ -87,10 +99,11 @@ jobs:
               sed 's|-$||g' | \
               tr '[:upper:]' '[:lower:]')
             echo "clean_branch=$CLEAN_BRANCH" >> $GITHUB_OUTPUT
-            echo "🏷️ Original branch: ${{ github.ref_name }}"
+            echo "🏷️ Original branch: $BRANCH_NAME"
             echo "🧹 Cleaned branch: $CLEAN_BRANCH"
           else
             echo "clean_branch=main" >> $GITHUB_OUTPUT
+            echo "🏷️ Branch: main (production)"
           fi
 
       - name: Deploy to Cloudflare Workers
@@ -99,7 +112,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: ${{ github.ref_name == 'main' && 'deploy --name til --compatibility-date 2025-12-30 --assets ./dist' || format('versions upload --name til --compatibility-date 2025-12-30 --assets ./dist --preview-alias {0}', steps.clean-branch.outputs.clean_branch) }}
+          command: ${{ steps.clean-branch.outputs.clean_branch == 'main' && 'deploy --name til --compatibility-date 2025-12-30 --assets ./dist' || format('versions upload --name til --compatibility-date 2025-12-30 --assets ./dist --preview-alias {0}', steps.clean-branch.outputs.clean_branch) }}
           wranglerVersion: "4.35.0"
 
       - name: Get Deployment URLs
