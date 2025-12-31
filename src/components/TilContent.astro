@@ -1,6 +1,7 @@
 ---
 import type { CollectionEntry } from "astro:content";
 import { render } from "astro:content";
+import CodeBlockCopyButton from "./CodeBlockCopyButton.astro";
 
 interface Props {
 	note: CollectionEntry<"notes">;
@@ -22,18 +23,19 @@ const { Content } = await render(note);
   prose-table:border-collapse prose-table:w-full
   prose-th:border prose-th:border-border prose-th:bg-muted/30 prose-th:px-4 prose-th:py-2 prose-th:text-left prose-th:font-semibold
   prose-td:border prose-td:border-border prose-td:px-4 prose-td:py-2
-">
+ ">
   <Content />
 </div>
 
 <script>
-  // 添加复制按钮到所有代码块
+  // 增强代码块，添加复制按钮
   document.addEventListener('astro:page-load', () => {
     const codeBlocks = document.querySelectorAll('.til-content pre');
     
     codeBlocks.forEach((block) => {
-      // 避免重复添加
-      if (block.querySelector('.copy-button')) return;
+      // 跳过已经处理的代码块
+      if (block.dataset.enhanced === 'true') return;
+      block.dataset.enhanced = 'true';
       
       const code = block.querySelector('code');
       if (!code) return;
@@ -46,9 +48,9 @@ const { Content } = await render(note);
       block.parentNode.insertBefore(wrapper, block);
       wrapper.appendChild(block);
       
-      // 添加复制按钮
+      // 创建复制按钮
       const copyBtn = document.createElement('button');
-      copyBtn.className = 'copy-button absolute top-2 right-2 inline-flex items-center gap-1 rounded-md border border-border bg-background hover:bg-muted transition-all duration-200 px-1.5 py-0.5 text-xs';
+      copyBtn.className = 'absolute top-2 right-2 inline-flex items-center gap-1 rounded-md border border-border bg-background hover:bg-muted transition-all duration-200 px-1.5 py-0.5 text-xs';
       copyBtn.innerHTML = `
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect width="9" height="13" x="9" y="9" rx="2" ry="2"></rect>

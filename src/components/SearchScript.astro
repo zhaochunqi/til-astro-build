@@ -1,0 +1,90 @@
+---
+// 搜索功能的客户端逻辑
+---
+
+<script>
+	import { 
+		debounce, 
+		filterResults, 
+		toggleCompactMode, 
+		updateURL, 
+		getSearchParams 
+	} from '../utils/search.ts';
+
+	// DOM 元素
+	let searchInput: HTMLInputElement;
+	let compactCheckbox: HTMLInputElement;
+	let resultsContainer: Element;
+	let resultsCount: Element;
+	let noResults: Element;
+	let searchItems: NodeListOf<Element>;
+
+	let isFiltering = false;
+
+	// 初始化
+	function init() {
+		// 获取 DOM 元素
+		searchInput = document.getElementById('search-input') as HTMLInputElement;
+		compactCheckbox = document.getElementById('compact-mode') as HTMLInputElement;
+		resultsContainer = document.getElementById('search-results');
+		resultsCount = document.getElementById('results-count');
+		noResults = document.getElementById('no-results');
+		searchItems = document.querySelectorAll('.search-item');
+
+		// 读取 URL 参数
+		const { query, compact } = getSearchParams();
+
+		// 设置初始 UI 状态
+		if (searchInput) searchInput.value = query;
+		if (compactCheckbox) compactCheckbox.checked = compact;
+		if (compact && resultsContainer) resultsContainer.classList.add('mode-compact');
+
+		// 过滤结果
+		console.log('Search init: found items', searchItems.length);
+		const count = filterResults(query, searchItems, resultsContainer, noResults);
+		updateResultsCount(count);
+		
+		// 事件监听器
+		searchInput?.addEventListener('input', debounce(handleInput, 300));
+		compactCheckbox?.addEventListener('change', handleCompactToggle);
+		
+		// 处理浏览器后退/前进按钮
+		window.addEventListener('popstate', () => {
+			const { query: q, compact: c } = getSearchParams();
+			
+			if (searchInput) searchInput.value = q;
+			if (compactCheckbox) compactCheckbox.checked = c;
+			toggleCompactMode(c, resultsContainer);
+			
+			const count = filterResults(q, searchItems, resultsContainer, noResults);
+			updateResultsCount(count);
+		});
+	}
+
+	function handleInput() {
+		const query = searchInput?.value.trim();
+		const compact = compactCheckbox?.checked;
+		updateURL(query, compact);
+		
+		const count = filterResults(query, searchItems, resultsContainer, noResults);
+		updateResultsCount(count);
+	}
+
+	function handleCompactToggle() {
+		const query = searchInput?.value.trim();
+		const compact = compactCheckbox?.checked;
+		
+		toggleCompactMode(compact, resultsContainer);
+		updateURL(query, compact);
+	}
+
+	function updateResultsCount(count: number) {
+		const query = searchInput?.value.trim();
+		if (resultsCount) {
+			resultsCount.textContent = query ? `${count} found` : `${count} total`;
+		}
+	}
+
+	// 运行初始化
+	document.addEventListener('astro:page-load', init);
+</script>

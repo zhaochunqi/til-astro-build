@@ -1,0 +1,64 @@
+---
+import type { CollectionEntry } from "astro:content";
+import NoteCard from "./NoteCard.astro";
+import { sortNotesByUlid } from "../utils/sort";
+
+interface Props {
+	notes: CollectionEntry<"notes">[];
+	showAll?: boolean;
+}
+
+const { notes, showAll = true } = Astro.props;
+const sortedNotes = sortNotesByUlid(notes);
+---
+
+<div id="search-results" class="space-y-6">
+	{showAll && sortedNotes.map((note) => (
+		<div class="search-item" 
+			data-title={note.data.title.toLowerCase()} 
+			data-tags={(note.data.tags || []).join(' ').toLowerCase()} 
+			data-slug={note.slug}
+		>
+			<NoteCard note={note} />
+		</div>
+	))}
+</div>
+
+<div id="no-results" class="hidden text-center py-12 text-muted-foreground">
+	No results found.
+</div>
+
+<style is:global>
+	/* Compact Mode Styles */
+	.mode-compact .note-content, 
+	.mode-compact .note-tags {
+		display: none !important;
+	}
+	
+	.mode-compact .note-header {
+		padding-bottom: 1.5rem !important; /* 当其他部分消失时恢复内边距 */
+		flex-direction: row-reverse !important;
+		align-items: center !important;
+		justify-content: space-between !important;
+	}
+	
+	.mode-compact .note-header > div:first-child { 
+		/* 日期部分 */
+		margin-bottom: 0 !important;
+	}
+
+	.mode-compact .note-header h3 {
+		flex: 1;
+		margin-right: 1rem;
+		font-size: 1rem; /* 紧凑列表中的较小字体 */
+	}
+
+	/* Highlight Styles */
+	.search-highlight {
+		background-color: #fde047 !important; /* Yellow-300 */
+		color: #000 !important; /* 强制黑色文字以形成对比 */
+		border-radius: 2px;
+		padding: 0 1px;
+		box-shadow: 0 0 2px #fde047;
+	}
+</style>

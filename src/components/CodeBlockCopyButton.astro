@@ -1,0 +1,59 @@
+---
+interface Props {
+	content: string;
+	size?: "sm" | "md" | "lg";
+}
+
+const { content, size = "sm" } = Astro.props;
+
+const sizeClasses = {
+	sm: "px-1.5 py-0.5 text-xs",
+	md: "px-2 py-1 text-sm",
+	lg: "px-3 py-1.5 text-base"
+};
+---
+
+<button
+	class="code-copy-button inline-flex items-center gap-1 rounded-md border border-border bg-background hover:bg-muted transition-all duration-200 {sizeClasses[size]}"
+	title="复制到剪贴板"
+	data-content={content}
+>
+	<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+		<rect width="9" height="13" x="9" y="9" rx="2" ry="2"></rect>
+		<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+	</svg>
+	<span class="copy-text">复制</span>
+</button>
+
+<script>
+	// 添加复制按钮到所有代码块
+	document.addEventListener('astro:page-load', () => {
+		const copyButtons = document.querySelectorAll('.code-copy-button:not([data-initialized])');
+		
+		copyButtons.forEach((button) => {
+			button.setAttribute('data-initialized', 'true');
+			
+			button.addEventListener('click', async () => {
+				try {
+					const content = button.getAttribute('data-content');
+					if (!content) return;
+					
+					await navigator.clipboard.writeText(content);
+					
+					// 动画反馈
+					button.classList.add('copied', 'bg-green-50', 'border-green-200', 'text-green-700');
+					button.querySelector('.copy-text').textContent = '已复制';
+					button.querySelector('svg').innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+					
+					setTimeout(() => {
+						button.classList.remove('copied', 'bg-green-50', 'border-green-200', 'text-green-700');
+						button.querySelector('.copy-text').textContent = '复制';
+						button.querySelector('svg').innerHTML = '<rect width="9" height="13" x="9" y="9" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>';
+					}, 2000);
+				} catch (err) {
+					console.error('复制失败:', err);
+				}
+			});
+		});
+	});
+</script>

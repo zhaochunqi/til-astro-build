@@ -1,0 +1,45 @@
+---
+import { Loader2, Search } from "lucide-astro";
+
+interface Props {
+	initialQuery?: string;
+	initialCompact?: boolean;
+}
+
+const { initialQuery = "", initialCompact = false } = Astro.props;
+---
+
+<div class="space-y-4">
+	<div class="flex items-center gap-2 text-muted-foreground">
+		<h1 class="text-3xl font-bold tracking-tighter text-foreground">Search</h1>
+		<div id="loading-indicator" class="hidden">
+			<Loader2 class="size-6 animate-spin" />
+		</div>
+	</div>
+	
+	<div class="relative">
+		<Search class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+		<input
+			type="text"
+			id="search-input"
+			class="w-full h-10 pl-9 pr-4 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+			placeholder="Search notes..."
+			value={initialQuery}
+		/>
+	</div>
+
+	<div class="flex items-center justify-between">
+		<div class="flex items-center space-x-2">
+			<input 
+				type="checkbox" 
+				id="compact-mode" 
+				class="h-4 w-4 rounded border-primary text-primary shadow focus:ring-primary-500"
+				checked={initialCompact}
+			/>
+			<label for="compact-mode" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+				Compact View (Titles Only)
+			</label>
+		</div>
+		<span id="results-count" class="text-sm text-muted-foreground"></span>
+	</div>
+</div>
