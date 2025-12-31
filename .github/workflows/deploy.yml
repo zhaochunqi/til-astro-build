@@ -99,14 +99,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: |
-            if [[ "${{ github.ref_name }}" == "main" ]]; then
-              # Main branch - production deployment
-              deploy --name til --compatibility-date 2025-12-30 --assets ./dist
-            else
-              # Feature branch - deployment with preview alias
-              deploy --name til --compatibility-date 2025-12-30 --assets ./dist --preview-alias ${{ steps.clean-branch.outputs.clean_branch }}
-            fi
+          command: deploy --name til --compatibility-date 2025-12-30 --assets ./dist ${{ github.ref_name == 'main' && '' || format('--preview-alias {0}', steps.clean-branch.outputs.clean_branch) }}
           wranglerVersion: "4.35.0"
 
       - name: Get Deployment URLs
