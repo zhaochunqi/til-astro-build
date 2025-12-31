@@ -19,6 +19,10 @@ export default defineConfig({
 	image: {
 		service: sharp(),
 	},
+	experimental: {
+		svgo: true,
+		contentIntellisense: true,
+	},
 	vite: {
 		plugins: [tailwindcss()],
 	},
