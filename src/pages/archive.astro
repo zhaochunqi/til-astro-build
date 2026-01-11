@@ -4,7 +4,7 @@ import Layout from "../layouts/Layout.astro";
 import { sortNotesByUlid } from "../utils/sort";
 import { site } from "../utils/config";
 
-const notes = sortNotesByUlid(await getCollection("notes"));
+const notes = sortNotesByUlid((await getCollection("notes")).filter((note) => note.data.display !== false));
 
 // Group notes by year and month
 interface GroupedNotes {
