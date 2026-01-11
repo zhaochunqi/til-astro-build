@@ -4,6 +4,7 @@ import NotesList from "../components/NotesList.astro";
 import Pagination from "../components/Pagination.astro";
 import Layout from "../layouts/Layout.astro";
 import { sortNotesByUlid } from "../utils/sort";
+import { site } from "../utils/config";
 
 export async function getStaticPaths({ paginate }) {
 	const notes = sortNotesByUlid(await getCollection("notes"));
@@ -12,9 +13,12 @@ export async function getStaticPaths({ paginate }) {
 }
 
 const { page } = Astro.props;
+const canonicalURL = page.currentPage === 1 
+	? new URL("/", site).href
+	: new URL(`/page/${page.currentPage}`, site).href;
 ---
 
-<Layout title="TIL - Today I Learned">
+<Layout title="TIL - Today I Learned" canonicalURL={canonicalURL}>
 	<section class="space-y-6">
 		<div class="flex flex-col space-y-2 max-w-4xl mx-auto">
 			<h1 class="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Latest Learning</h1>

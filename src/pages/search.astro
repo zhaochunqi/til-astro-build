@@ -4,6 +4,7 @@ import Layout from "../layouts/Layout.astro";
 import SearchInput from "../components/SearchInput.astro";
 import SearchResults from "../components/SearchResults.astro";
 import SearchScript from "../components/SearchScript.astro";
+import { site } from "../utils/config";
 
 const notes = await getCollection("notes");
 
@@ -11,9 +12,10 @@ const notes = await getCollection("notes");
 const params = new URLSearchParams(Astro.url.search);
 const initialQuery = params.get('q') || '';
 const initialCompact = params.get('compact') === 'true';
+const canonicalURL = new URL("/search", site).href;
 ---
 
-<Layout title="Search - TIL">
+<Layout title="Search - TIL" canonicalURL={canonicalURL}>
   <div class="max-w-4xl mx-auto space-y-6">
     <SearchInput initialQuery={initialQuery} initialCompact={initialCompact} />
     <SearchResults notes={notes} showAll={true} />

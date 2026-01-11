@@ -3,6 +3,7 @@ import { getCollection } from "astro:content";
 import NotesList from "../../components/NotesList.astro";
 import Layout from "../../layouts/Layout.astro";
 import { sortNotesByUlid } from "../../utils/sort";
+import { site } from "../../utils/config";
 
 export async function getStaticPaths() {
 	const notes = await getCollection("notes");
@@ -22,9 +23,10 @@ export async function getStaticPaths() {
 const { tag } = Astro.params;
 const { notes } = Astro.props;
 const sortedNotes = sortNotesByUlid(notes);
+const canonicalURL = new URL(`/tags/${tag}`, site).href;
 ---
 
-<Layout title={`Tag: ${tag} - TIL`}>
+<Layout title={`Tag: ${tag} - TIL`} canonicalURL={canonicalURL}>
   <section class="space-y-6">
     <div class="flex flex-col space-y-2 max-w-4xl mx-auto">
       <h1 class="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Tag: {tag}</h1>
