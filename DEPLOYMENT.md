@@ -51,7 +51,7 @@ git push
 1. 在 GitHub 仓库中，点击 **"Actions"** 标签
 2. 查看 **"Deploy to Cloudflare Workers"** workflow 运行状态
 3. 等待部署完成（通常 1-2 分钟）
-4. 访问你的网站：`https://til-astro-build.workers.dev`
+4. 访问你的网站：`https://til.harchiko.workers.dev`
 
 ## 🎯 后续使用
 
