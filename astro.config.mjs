@@ -9,7 +9,7 @@ import sharp from "sharp";
 // https://astro.build/config
 export default defineConfig({
 	site: "https://til.zhaochunqi.com",
-	integrations: [mdx({ optimize: true }), sitemap()],
+	integrations: [mdx({ optimize: true }), sitemap({ generateIndex: false, generateRobotsTxt: true })],
 	markdown: {
 		shikiConfig: {
 			theme: "github-light-high-contrast",
