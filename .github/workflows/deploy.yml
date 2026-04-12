@@ -73,7 +73,6 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --name til --compatibility-date 2025-12-30 --assets ./dist
-          wranglerVersion: "4.35.0"
 
       - name: Get Wrangler Version
         id: wrangler-version
