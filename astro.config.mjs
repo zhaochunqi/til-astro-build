@@ -7,6 +7,7 @@ import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
 import sharp from "sharp";
+import remarkNoteLinks from "./src/plugins/remark-note-links.mjs";
 
 const singleSitemapCompat = {
 	name: "single-sitemap-compat",
@@ -34,6 +35,7 @@ export default defineConfig({
 	site: "https://til.zhaochunqi.com",
 	integrations: [mdx({ optimize: true }), sitemap({ entryLimit: 50000 }), singleSitemapCompat],
 	markdown: {
+		remarkPlugins: [remarkNoteLinks],
 		shikiConfig: {
 			theme: "github-light-high-contrast",
 			wrap: true,

@@ -20,7 +20,7 @@ export async function getStaticPaths() {
 const { note } = Astro.props;
 const allNotes = await getCollection("notes");
 const relatedNotes = findRelatedNotes(note, allNotes, 3);
-const canonicalURL = new URL(`/${note.slug}`, site).href;
+const canonicalURL = new URL(`/${note.slug}/`, site).href;
 const isHidden = note.data.display === false;
 ---
 
